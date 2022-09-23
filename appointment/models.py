@@ -29,6 +29,7 @@ class Employee(models.Model):
 
 
 class Queue(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name="Organization")
     queue_name = models.CharField(verbose_name="Queue name", max_length=255)
     date_time_added = models.DateTimeField(auto_now_add=True, verbose_name="Date time added")
     is_active = models.BooleanField(verbose_name="Is active", default=False)
