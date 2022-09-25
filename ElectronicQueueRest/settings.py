@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework_simplejwt',
     'channels',
+    'django_celery_beat',
     'appointment.apps.AppointmentConfig',
 ]
 
@@ -76,6 +77,9 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+from celery.schedules import crontab
+import appointment.tasks
 
 
 REST_FRAMEWORK = {
@@ -153,6 +157,10 @@ EMAIL_HOST_PASSWORD = 'fygjromqsjncrusd'
 
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
 
 LANGUAGE_CODE = 'ru-RU'
 

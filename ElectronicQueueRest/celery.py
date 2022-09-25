@@ -3,6 +3,8 @@ import os
 from celery import Celery
 from django.core.mail import send_mail
 from django.conf import settings
+from celery.schedules import crontab
+from appointment.tasks import send_email
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ElectronicQueueRest.settings')
@@ -21,8 +23,12 @@ app.autodiscover_tasks()
 
 # @app.on_after_configure.connect
 # def setup_periodic_tasks(sender, **kwargs):
-#     sender.add_periodic_task(30.0, send_email.s(), name='add every 10')
+#     sender.add_periodic_task(10.0, send_email.s(), name='add every 10')
 
+
+@app.task
+def test(arg):
+    print(arg)
 
 # @app.task
 # def add(x, y):

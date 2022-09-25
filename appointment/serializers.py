@@ -26,3 +26,18 @@ class QueueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Queue
         fields = '__all__'
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'email']
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+
+
+class UserNamesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username']
