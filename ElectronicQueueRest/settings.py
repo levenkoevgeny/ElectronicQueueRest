@@ -151,8 +151,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'leva24031986@gmail.com'
-EMAIL_HOST_PASSWORD = 'fygjromqsjncrusd'
+EMAIL_HOST_USER = 'electronicqueuenoreply@gmail.com'
+EMAIL_HOST_PASSWORD = 'tixnpikrjkhcmvbe'
 
 
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
