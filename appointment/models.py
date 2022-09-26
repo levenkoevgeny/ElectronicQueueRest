@@ -51,7 +51,7 @@ class Appointment(models.Model):
     appointment_firstname = models.CharField(verbose_name="Appointment firstname", max_length=100, blank=True, null=True)
     appointment_patronymic = models.CharField(verbose_name="Appointment patronymic", max_length=100, blank=True, null=True)
     appointment_email = models.EmailField(verbose_name="Appointment email", max_length=100, blank=True, null=True)
-    appointment_phone = models.EmailField(verbose_name="Appointment phone", max_length=20, blank=True, null=True)
+    appointment_phone = models.CharField(verbose_name="Appointment phone", max_length=20, blank=True, null=True)
     date_time_added = models.DateTimeField(auto_now_add=True, verbose_name="Date time added")
     is_booked = models.BooleanField(verbose_name="Booked", default=False)
     comment = models.TextField(verbose_name="Comment", blank=True, null=True)
