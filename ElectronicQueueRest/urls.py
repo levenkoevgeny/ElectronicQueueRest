@@ -23,6 +23,7 @@ router.register(r'users', views.UserViewSet)
 urlpatterns = [
     path('', RedirectView.as_view(url='/api')),
     path('api/users/me/', views.get_me),
+    path('api/calendar/', views.get_calendar),
     # path('api/task/', views.send_email),
     path('api/', include(router.urls)),
     path('admin/', admin.site.urls),
