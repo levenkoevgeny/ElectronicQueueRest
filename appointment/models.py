@@ -35,7 +35,7 @@ class Queue(models.Model):
     queue_name = models.CharField(verbose_name="Queue name", max_length=255)
     date_time_added = models.DateTimeField(auto_now_add=True, verbose_name="Date time added")
     is_active = models.BooleanField(verbose_name="Is active", default=False)
-    random_uuid = models.UUIDField(verbose_name="Is active", default=uuid.uuid4, editable=True)
+    random_uuid = models.UUIDField(verbose_name="UUID", default=uuid.uuid4, editable=True)
 
     def __str__(self):
         return self.queue_name
@@ -57,7 +57,7 @@ class Appointment(models.Model):
     appointment_phone = models.CharField(verbose_name="Appointment phone", max_length=20, blank=True, null=True)
     date_time_added = models.DateTimeField(auto_now_add=True, verbose_name="Date time added")
     is_booked = models.BooleanField(verbose_name="Booked", default=False)
-    comment = models.TextField(verbose_name="Comment", blank=True, null=True)
+    appointment_comment = models.TextField(verbose_name="Comment", blank=True, null=True)
 
     def __str__(self):
         return "{} {} {}".format(self.appointment_date_time.date(), self.appointment_date_time.time(), self.employee.last_name)

@@ -1,4 +1,6 @@
-from rest_framework import viewsets
+import datetime
+
+from rest_framework import viewsets, mixins
 from rest_framework import permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -25,8 +27,9 @@ from .models import Organization, Employee, Appointment, Queue
 from .serializers import OrganizationSerializer, EmployeeSerializer, AppointmentSerializer, QueueSerializer, \
     UserSerializer, UserNamesSerializer
 from .consumers import AppointmentsConsumer
+from .filters import QueueFilter, AppointmentFilter
 from .tasks import send_email
-from .utils import get_payload_from_request_token
+from .utils import get_payload_from_request_token, json_serial
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -63,11 +66,14 @@ class QueueViewSet(viewsets.ModelViewSet):
             organization_data = Organization.objects.get(user_id=payload['user_id'])
         except Organization.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+        queryset = QueueFilter(request.GET, queryset=Queue.objects.all()).qs
+
         if organization_data.user.is_superuser:
-            queryset = Queue.objects.all()
+            queryset_response = queryset
         else:
-            queryset = Queue.objects.filter(organization=organization_data)
-        serializer = QueueSerializer(queryset, many=True)
+            queryset_response = queryset.filter(organization=organization_data)
+        serializer = QueueSerializer(queryset_response, many=True)
         return Response(serializer.data)
 
     def destroy(self, *args, **kwargs):
@@ -77,8 +83,6 @@ class QueueViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def queue_create(self, request):
-        print('queue_create', request.data)
-
         try:
             queue = Queue.objects.get(pk=request.data['queue_id'])
         except Queue.DoesNotExist:
@@ -130,13 +134,22 @@ class QueueViewSet(viewsets.ModelViewSet):
         serializer = AppointmentSerializer(queryset, many=True)
         return Response(serializer.data)
 
-
     queryset = Queue.objects.all()
     serializer_class = QueueSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class AppointmentViewSet(viewsets.ModelViewSet):
+
+    def list(self, request, *args, **kwargs):
+        queryset = AppointmentFilter(request.GET, queryset=Appointment.objects.all()).qs
+        if 'day_date' in request.GET:
+            date_time_str = request.GET['day_date'] + ' 00:00:00'
+            date_req = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S').date()
+            queryset = queryset.filter(date_time_added__range=(datetime.combine(date_req, time.min), datetime.combine(date_req, time.max)))
+
+        serializer = AppointmentSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     def destroy(self, *args, **kwargs):
         serializer = self.get_serializer(self.get_object())
@@ -151,7 +164,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
-    filterset_fields = ['queue', 'employee', 'appointment_lastname']
+    filterset_fields = ['queue', 'employee', 'is_booked']
     permission_classes = [permissions.IsAuthenticated]
 
 
@@ -231,10 +244,16 @@ class CalendarDay:
         return '{} {} {}'.format(str(self.day_date), self.day_number, self.day_name)
 
 
-def json_serial(obj):
-    """JSON serializer for objects not serializable by default json code"""
+class QueueViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    queryset = Queue.objects.all()
+    serializer_class = QueueSerializer
 
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    raise TypeError ("Type %s not serializable" % type(obj))
 
+class AppointmentViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
+
+
+class EmployeeViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeSerializer

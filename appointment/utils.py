@@ -3,6 +3,7 @@ from django.conf import settings
 from jose import jwt
 from rest_framework.response import Response
 from rest_framework import status
+from datetime import *
 
 
 def get_payload_from_request_token(request):
@@ -22,3 +23,9 @@ def send_email(email_list, subject="No subject", message=""):
         email_list,
         fail_silently=False,
     )
+
+
+def json_serial(obj):
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError ("Type %s not serializable" % type(obj))

@@ -18,7 +18,9 @@ router.register(r'employees', views.EmployeeViewSet)
 router.register(r'appointments', views.AppointmentViewSet)
 router.register(r'queues', views.QueueViewSet)
 router.register(r'users', views.UserViewSet)
-# router.register(r'usernames', views.UserNamesViewSet)
+router.register(r'appointment-client', views.AppointmentViewSetClient)
+router.register(r'queue-client', views.QueueViewSetClient)
+router.register(r'employee-client', views.EmployeeViewSetClient)
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/api')),
