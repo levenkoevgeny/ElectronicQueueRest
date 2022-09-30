@@ -20,12 +20,13 @@ class AppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = '__all__'
+        depth = 1
 
 
 class QueueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Queue
-        fields = '__all__'
+        fields = ('id', 'organization', 'queue_name', 'date_time_added', 'is_active', 'random_uuid', 'appointment_count')
 
 
 class UserSerializer(serializers.ModelSerializer):

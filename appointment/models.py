@@ -20,6 +20,9 @@ class Organization(models.Model):
 class Employee(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name="Organization")
     last_name = models.CharField(verbose_name="Last name", max_length=100)
+    first_name = models.CharField(verbose_name="First name", max_length=100, blank=True, null=True)
+    patronymic = models.CharField(verbose_name="Patronymic", max_length=100, blank=True, null=True)
+    photo = models.ImageField(verbose_name="Photo", upload_to="employees", blank=True, null=True)
 
     def __str__(self):
         return self.last_name
@@ -36,6 +39,10 @@ class Queue(models.Model):
     date_time_added = models.DateTimeField(auto_now_add=True, verbose_name="Date time added")
     is_active = models.BooleanField(verbose_name="Is active", default=False)
     random_uuid = models.UUIDField(verbose_name="UUID", default=uuid.uuid4, editable=True)
+
+    @property
+    def appointment_count(self):
+        return self.appointment_set.all().count()
 
     def __str__(self):
         return self.queue_name

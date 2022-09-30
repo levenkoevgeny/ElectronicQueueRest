@@ -144,10 +144,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = AppointmentFilter(request.GET, queryset=Appointment.objects.all()).qs
         if 'day_date' in request.GET:
-            date_time_str = request.GET['day_date'] + ' 00:00:00'
-            date_req = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S').date()
-            queryset = queryset.filter(date_time_added__range=(datetime.combine(date_req, time.min), datetime.combine(date_req, time.max)))
-
+            if request.GET['day_date'] != "":
+                date_time_str = request.GET['day_date'] + ' 00:00:00'
+                date_req = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S').date()
+                print('jjjj', date_req)
+                queryset = queryset.filter(appointment_date_time__range=(datetime.combine(date_req, time.min), datetime.combine(date_req, time.max)))
         serializer = AppointmentSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -217,20 +218,18 @@ def user_post_save_handler(sender, instance, created, **kwargs):
             Organization.objects.create(user=instance, organization_name="Без названия")
 
 
-@api_view(['GET', 'POST'])
+@api_view(['GET'])
 def get_calendar(request):
     day_names = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-    now = datetime.now()
-    prev_date = now - relativedelta(months=1)
-    next_date = now + relativedelta(months=1)
     calendar_list = []
+    year = int(request.GET['year'])
+    month = int(request.GET['month'])
     cal = calendar.Calendar()
-    for day in cal.itermonthdates(now.year, now.month):
-        is_other_month = True if day.month != now.month else False
-        cal_day = CalendarDay(day, day.weekday(), day_names[day.weekday()], is_other_month)
-        calendar_list.append(json.dumps(cal_day.__dict__, default=json_serial, ensure_ascii=False))
-    return Response({'calendar': calendar_list, 'prev_date': json_serial(prev_date),
-                     'next_date': json_serial(next_date)})
+    for day in cal.itermonthdates(year, month):
+        is_other_month = True if day.month != month else False
+        cal_day = CalendarDay(day.isoformat(), day.weekday(), day_names[day.weekday()], is_other_month)
+        calendar_list.append(cal_day.__dict__)
+    return Response({'calendar': json.dumps(calendar_list, ensure_ascii=False)})
 
 
 class CalendarDay:
