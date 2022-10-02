@@ -26,7 +26,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
 class QueueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Queue
-        fields = ('id', 'organization', 'queue_name', 'date_time_added', 'is_active', 'random_uuid', 'appointment_count')
+        fields = ('id', 'organization', 'queue_name', 'date_time_added', 'is_active', 'appointment_count',
+                  'get_free_appointment_count', 'get_booked_appointment_count')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -36,9 +37,3 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
-
-
-class UserNamesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username']

@@ -6,7 +6,7 @@ class QueueFilter(django_filters.FilterSet):
     class Meta:
         model = Queue
         fields = {
-            'random_uuid': ['exact'],
+            'queue_name': ['icontains'],
         }
 
 

@@ -24,8 +24,3 @@ def send_email(email_list, subject="No subject", message=""):
         fail_silently=False,
     )
 
-
-def json_serial(obj):
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    raise TypeError ("Type %s not serializable" % type(obj))

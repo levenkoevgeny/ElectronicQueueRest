@@ -34,21 +34,29 @@ class Employee(models.Model):
 
 
 class Queue(models.Model):
+    id = models.UUIDField(primary_key=True, verbose_name="UUID", default=uuid.uuid4, editable=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name="Organization")
     queue_name = models.CharField(verbose_name="Queue name", max_length=255)
     date_time_added = models.DateTimeField(auto_now_add=True, verbose_name="Date time added")
     is_active = models.BooleanField(verbose_name="Is active", default=False)
-    random_uuid = models.UUIDField(verbose_name="UUID", default=uuid.uuid4, editable=True)
 
     @property
     def appointment_count(self):
         return self.appointment_set.all().count()
 
+    @property
+    def get_free_appointment_count(self):
+        return self.appointment_set.filter(is_booked=False).count()
+
+    @property
+    def get_booked_appointment_count(self):
+        return self.appointment_set.filter(is_booked=True).count()
+
     def __str__(self):
         return self.queue_name
 
     class Meta:
-        ordering = ('queue_name',)
+        ordering = ('date_time_added',)
         verbose_name = 'Queue'
         verbose_name_plural = 'Queues'
 

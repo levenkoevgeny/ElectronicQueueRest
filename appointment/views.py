@@ -25,11 +25,11 @@ import json
 
 from .models import Organization, Employee, Appointment, Queue
 from .serializers import OrganizationSerializer, EmployeeSerializer, AppointmentSerializer, QueueSerializer, \
-    UserSerializer, UserNamesSerializer
+    UserSerializer
 from .consumers import AppointmentsConsumer
 from .filters import QueueFilter, AppointmentFilter
 from .tasks import send_email
-from .utils import get_payload_from_request_token, json_serial
+from .utils import get_payload_from_request_token
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -73,6 +73,7 @@ class QueueViewSet(viewsets.ModelViewSet):
             queryset_response = queryset
         else:
             queryset_response = queryset.filter(organization=organization_data)
+
         serializer = QueueSerializer(queryset_response, many=True)
         return Response(serializer.data)
 
@@ -130,9 +131,7 @@ class QueueViewSet(viewsets.ModelViewSet):
         except Exception:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        queryset = Appointment.objects.filter(queue=queue)
-        serializer = AppointmentSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response(status=status.HTTP_200_OK)
 
     queryset = Queue.objects.all()
     serializer_class = QueueSerializer
@@ -147,7 +146,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             if request.GET['day_date'] != "":
                 date_time_str = request.GET['day_date'] + ' 00:00:00'
                 date_req = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S').date()
-                print('jjjj', date_req)
                 queryset = queryset.filter(appointment_date_time__range=(datetime.combine(date_req, time.min), datetime.combine(date_req, time.max)))
         serializer = AppointmentSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -165,19 +163,18 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
-    filterset_fields = ['queue', 'employee', 'is_booked']
     permission_classes = [permissions.IsAuthenticated]
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
 
-class UserNamesViewSet(viewsets.ModelViewSet):
+class UserViewSetForRegistration(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = User.objects.all()
-    serializer_class = UserNamesSerializer
+    serializer_class = UserSerializer
     filterset_fields = {
         'username': ['exact'],
     }
@@ -249,6 +246,17 @@ class QueueViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
 
 
 class AppointmentViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+
+    def list(self, request, *args, **kwargs):
+        queryset = AppointmentFilter(request.GET, queryset=Appointment.objects.all()).qs
+        if 'day_date' in request.GET:
+            if request.GET['day_date'] != "":
+                date_time_str = request.GET['day_date'] + ' 00:00:00'
+                date_req = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S').date()
+                queryset = queryset.filter(appointment_date_time__range=(datetime.combine(date_req, time.min), datetime.combine(date_req, time.max)))
+        serializer = AppointmentSerializer(queryset, many=True)
+        return Response(serializer.data)
+
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
 
