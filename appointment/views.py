@@ -27,7 +27,7 @@ from .models import Organization, Employee, Appointment, Queue
 from .serializers import OrganizationSerializer, EmployeeSerializer, AppointmentSerializer, QueueSerializer, \
     UserSerializer
 from .consumers import AppointmentsConsumer
-from .filters import QueueFilter, AppointmentFilter
+from .filters import QueueFilter, AppointmentFilter, EmployeeClientFilter
 from .tasks import send_email
 from .utils import get_payload_from_request_token
 
@@ -69,10 +69,7 @@ class QueueViewSet(viewsets.ModelViewSet):
 
         queryset = QueueFilter(request.GET, queryset=Queue.objects.all()).qs
 
-        if organization_data.user.is_superuser:
-            queryset_response = queryset
-        else:
-            queryset_response = queryset.filter(organization=organization_data)
+        queryset_response = queryset.filter(organization=organization_data)
 
         serializer = QueueSerializer(queryset_response, many=True)
         return Response(serializer.data)
@@ -262,5 +259,9 @@ class AppointmentViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin,
 
 
 class EmployeeViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    def list(self, request, *args, **kwargs):
+        queryset = EmployeeClientFilter(request.GET, queryset=Employee.objects.all()).qs
+        serializer = EmployeeSerializer(queryset, many=True)
+        return Response(serializer.data)
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
