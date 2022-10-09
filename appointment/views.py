@@ -16,6 +16,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.db import transaction
 
 from jose import jwt
 import calendar
@@ -25,7 +26,7 @@ import json
 
 from .models import Organization, Employee, Appointment, Queue
 from .serializers import OrganizationSerializer, EmployeeSerializer, AppointmentSerializer, QueueSerializer, \
-    UserSerializer
+    UserSerializer, AppointmentClientSerializer
 from .consumers import AppointmentsConsumer
 from .filters import QueueFilter, AppointmentFilter, EmployeeClientFilter
 from .tasks import send_email
@@ -152,11 +153,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         super().destroy(*args, **kwargs)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def perform_update(self, serializer):
-        updated_appointment = serializer.save()
-        if updated_appointment.is_booked:
-            if updated_appointment.appointment_email:
-                send_email.delay([updated_appointment.appointment_email], "Запись на ЦТ", "Вы записаны")
+    # def perform_update(self, serializer):
+    #     updated_appointment = serializer.save()
+        # if updated_appointment.is_booked:
+        #     if updated_appointment.appointment_email:
+        #         send_email.delay([updated_appointment.appointment_email], "Запись на ЦТ", "Вы записаны")
 
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
@@ -195,14 +196,14 @@ def get_me(request):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-@receiver(post_save, sender=Appointment)
-def appointment_post_save_handler(sender, instance, created, **kwargs):
-    if isinstance(instance, Appointment):
-        if created:
-            queue_group_name = 'queue_%s' % instance.queue.id
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(queue_group_name, {"type": "appointment_message",
-                                                                       'message': AppointmentSerializer(instance).data})
+# @receiver(post_save, sender=Appointment)
+# def appointment_post_save_handler(sender, instance, created, **kwargs):
+#     if isinstance(instance, Appointment):
+#         if created:
+#             queue_group_name = 'queue_%s' % instance.queue.id
+#             channel_layer = get_channel_layer()
+#             async_to_sync(channel_layer.group_send)(queue_group_name, {"type": "appointment_message",
+#                                                                        'message': AppointmentSerializer(instance).data})
 
 
 @receiver(post_save, sender=User)
@@ -251,11 +252,31 @@ class AppointmentViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin,
                 date_time_str = request.GET['day_date'] + ' 00:00:00'
                 date_req = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S').date()
                 queryset = queryset.filter(appointment_date_time__range=(datetime.combine(date_req, time.min), datetime.combine(date_req, time.max)))
-        serializer = AppointmentSerializer(queryset, many=True)
+        serializer = AppointmentClientSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    # def perform_update(self, serializer):
+    #     instance = serializer.save()
+    #     print(self.request.data)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        try:
+            appointment = Appointment.objects.select_for_update().get(pk=request.data['id'])
+        except Appointment.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        if appointment.is_booked:
+            return Response(json.dumps({'is_already_booked': True}, ensure_ascii=False), status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = AppointmentClientSerializer(appointment, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     queryset = Appointment.objects.all()
-    serializer_class = AppointmentSerializer
+    serializer_class = AppointmentClientSerializer
 
 
 class EmployeeViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -263,5 +284,6 @@ class EmployeeViewSetClient(mixins.ListModelMixin, mixins.RetrieveModelMixin, vi
         queryset = EmployeeClientFilter(request.GET, queryset=Employee.objects.all()).qs
         serializer = EmployeeSerializer(queryset, many=True)
         return Response(serializer.data)
+
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer

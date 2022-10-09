@@ -133,6 +133,17 @@ DATABASES = {
     }
 }
 
+DATABASES_ = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {
+            'database': 'queue',
+            'user': 'levenko',
+            'password': '12345678',
+        },
+    }
+}
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',

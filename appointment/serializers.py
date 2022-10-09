@@ -23,6 +23,12 @@ class AppointmentSerializer(serializers.ModelSerializer):
         depth = 1
 
 
+class AppointmentClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appointment
+        fields = '__all__'
+
+
 class QueueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Queue
